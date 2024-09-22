@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <string>
-
+#include<numeric>
 //1.
 std::vector<int> GetUniqueMonsters(std::vector<int> numbers)
 {
@@ -130,6 +130,36 @@ int KthSmallestInBST(TreeNode* root, int k)
 
     return v[k];
 }
+//R(left, k);
+// if(left != -1) return left;
+// k--;
+// if(k==0) return node->val;
+// 
+// return R(right, k);
+
+//PreOrde
+//InOrde
+//PostOrder
+
+//int KthSmallestInBST(TreeNode* root, int k)
+//{
+//    std::vector<int> elements;
+//    std::function<void(TreeNode*)> inOrder = & {
+//        if (!node) return;
+//        inOrder(node->left);
+//        elements.push_back(node->val);
+//        inOrder(node->right);
+//    };
+//
+//    inOrder(root);
+//
+//    if (k >= 1 && k <= elements.size())
+//        return elements[k - 1];
+//    else
+//        return -1; // Handle invalid k values
+//}
+
+
 
 //4.
 int Research(std::vector<std::vector<int>> fielsd, int x, int y, int farmSize)
@@ -178,6 +208,53 @@ int GetMinStones(std::vector<std::vector<int>> fielsd, int farmSize)
     return *s.begin();
 }
 
+int GetMinStones2(std::vector<std::vector<int>>& field, int farmSize)
+{
+    int n = field.size();
+    int m = field[0].size();
+  
+    //stone prefixsum
+    std::vector<std::vector<int>> prefixSum(n + 1, std::vector<int>(m + 1, 0));
+    
+    for (int i = 1; i <= n; i++)
+    {
+        for (int j = 1; j <= m; j++)
+        {
+            prefixSum[i][j] = prefixSum[i - 1][j] + prefixSum[i][j - 1] - prefixSum[i - 1][j - 1] + field[i - 1][j - 1];
+        }
+    }
+    
+    //baren prefixsum
+    std::vector<std::vector<int>> prefixSum2(n + 1, std::vector<int>(m + 1, 0));
+
+    for (int i = 1; i <= n; i++)
+    {
+        for (int j = 1; j <= m; j++)
+        {
+            prefixSum2[i][j] = prefixSum2[i - 1][j] + prefixSum2[i][j - 1] - prefixSum2[i - 1][j - 1] + (field[i - 1][j - 1] == 2? 1:0);
+        }
+    }
+
+    int minStones = std::numeric_limits<int>::max();
+
+    // 부분 블록 순회
+    for (int i = 0; i <= n - farmSize; i++)
+    {
+        for (int j = 0; j <= m - farmSize; j++)
+        {
+            int wastes = prefixSum2[i + farmSize][j + farmSize] - prefixSum2[i][j + farmSize] - prefixSum2[i + farmSize][j] + prefixSum2[i][j];
+            if (wastes == 0)
+            {
+                int stonesInBlock = prefixSum[i + farmSize][j + farmSize] - prefixSum[i][j + farmSize] - prefixSum[i + farmSize][j] + prefixSum[i][j];
+                    
+                minStones = std::min(minStones, stonesInBlock);
+            }
+        }
+    }
+
+    return (minStones == std::numeric_limits<int>::max()) ? -1 : minStones;
+}
+
 //5.
 bool CanJump(std::vector<int>& nums)
 {
@@ -199,6 +276,27 @@ bool CanJump(std::vector<int>& nums)
     return v[nums.size() - 1];
 }
 
+bool CanJump2(std::vector<int>& nums)
+{
+    int max_reach = 0; // 현재까지 도달할 수 있는 최대 인덱스
+
+    for (int i = 0; i < nums.size(); i++)
+    {
+        if (i > max_reach)
+        {
+            // 현재 인덱스에 도달할 수 없음
+            return false;
+        }
+
+        // Update the maximum reachable index
+        max_reach = std::max(max_reach, i + nums[i]);
+    }
+
+    // If we can reach the end, return true
+    return true;
+}
+
+
 //6.
 int LengthOfReplcaementSubstring(std::string s, int k)
 {
@@ -208,13 +306,25 @@ int LengthOfReplcaementSubstring(std::string s, int k)
         um[c]++;
     }
     int max{};
+    int possible{ um[0] };
     for (auto e : um)
     {
         max = std::max(max, e.second);
+        if (e.second >= k)
+        {
+            possible = std::min(possible, e.second);
+        }
     }
 
-    return max + k;
+    if (max + possible > s.size())
+    {
+        return max;
+    }
+
+    return max + possible;
 }
+
+
 
 //7.
 struct ListNode
@@ -281,7 +391,6 @@ ListNode* MergeLists(std::vector<ListNode*>& lists)
     {
         return nullptr;
     }
-
 }
 
 //8.
@@ -331,6 +440,25 @@ int MaxProductOfSubArray(std::vector<int>& nums)
     return max;
 }
 
+int MaxProductOfSubArray2(std::vector<int>& nums)
+{
+    int max = nums[0];
+    int min = nums[0];
+    int answer = nums[0];
+
+    for (int i = 1; i < nums.size(); i++)
+    {
+        int temp = max;
+        max = std::max({ nums[i], nums[i] * max, nums[i] * min });
+        min = std::min({ nums[i], nums[i] * temp, nums[i] * min });
+
+        answer = std::max(answer, max);
+    }
+
+    return answer;
+}
+
+
 //10.
 bool Palindrome(std::string s, int l, int r)
 {
@@ -362,6 +490,10 @@ std::string LongetPalindrome(std::string s)
     }
     return answer;
 }
+
+//Manacher's Algiruthm
+
+//
 int main()
 {
    // std::cout << GetMinBlocks({ 1,2,5,3,1,0,2,3 }, 6, 3);
@@ -408,4 +540,38 @@ int main()
 
     //// 결과 출력
     //std::cout << "가장 긴 팰린드롬 부분 문자열: " << result << std::endl;
+
+        // 예시 입력: 문자열과 추가로 바꿀 수 있는 문자 개수
+    //std::string input = "ababbc";
+    //int k = 2;
+
+    //// 함수 호출
+    //int result = LengthOfReplcaementSubstring(input, k);
+
+    //// 결과 출력
+    //std::cout << "가장 긴 대체 가능한 부분 문자열의 길이: " << result << std::endl;
+
+
+    //std::string input = "ababbc";
+    //int k = 2;
+
+    //// 함수 호출
+    //int result = LengthOfReplcaementSubstring(input, k);
+
+    //// 결과 출력
+    //std::cout << "가장 긴 대체 가능한 부분 문자열의 길이: " << result << std::endl;
+
+        // 예시 입력: 정수 배열
+    std::vector<int> input = { -2,0,-1 };
+
+    // 함수 호출
+    int result = MaxProductOfSubArray2(input);
+
+    // 결과 출력
+    std::cout << "부분 배열의 최대 곱: " << result << std::endl;
+
+    return 0;
+
 }
+
+
